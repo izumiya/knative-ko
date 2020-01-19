@@ -63,7 +63,7 @@ minikube start --memory=16384 --cpus=6 \
 ```
 IPを割り振るためtunnelする
 ```
-minikube tunnel &> /dev/null &
+minikube tunnel
 ```
 
 ### gloo をインストール
@@ -78,16 +78,6 @@ EXTERNAL_IP=$(kubectl get svc -ngloo-system knative-external-proxy -o jsonpath='
 kubectl patch configmap config-domain -nknative-serving --patch "{\"data\": {\"example.com\": null, \"$EXTERNAL_IP.xip.io\": \"\"}}"
 ```
 
-### 証明書を入れる
-```
-mkcert -cert-file tls.crt -key-file tls.key "*.default.$EXTERNAL_IP.xip.io"
-kubectl create secret tls my-knative-tls-secret \
-  --key tls.key \
-  --cert tls.crt \
-  --namespace default
-rm -f tls.crt tls.key
-```
-
 ### koの変数を設定する
 ```
 export KO_DOCKER_REPO=ko.local
@@ -99,9 +89,27 @@ export KO_LOCAL=minikube
 skaffold dev -f skaffold.minikube.yaml
 ```
 
+### https接続する
+証明書をsecretに追加
+```
+mkcert -cert-file tls.crt -key-file tls.key "*.default.$EXTERNAL_IP.xip.io"
+kubectl create secret tls my-knative-tls-secret \
+  --key tls.key \
+  --cert tls.crt \
+  --namespace default
+rm -f tls.crt tls.key
+```
+service.yaml の metadata に annotation を追加する
+```
+  annotations:
+    gloo.networking.knative.dev/ssl.sni_domains: ko-example.default.{{ EXTERNAL_IPを入れる }}.xip.io
+    gloo.networking.knative.dev/ssl.secret_name: my-knative-tls-secret
+```
+
 ## References
 - https://knative.dev/docs/concepts/resources/#other-resources
 - https://github.com/google/ko
 - https://knative.dev/blog/2018/12/18/ko-fast-kubernetes-microservice-development-in-go/
 - https://blog.francium.tech/deploy-knative-service-directly-from-source-code-using-kaniko-ko-62f628a010d2
 - https://github.com/GoogleContainerTools/skaffold/tree/master/examples/custom
+- https://docs.solo.io/gloo/latest/knative/
