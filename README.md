@@ -39,7 +39,7 @@ gcloud beta container clusters create $CLUSTER_NAME \
 ### カスタムドメインを設定する
 ```
 EXTERNAL_IP=$(kubectl get service istio-ingressgateway -nistio-system -o jsonpath='{.status.loadBalancer.ingress[*].ip}')
-kubectl patch configmap config-domain -nknative-serving --patch "{\"data\": {\"example.com\": null, \"$EXTERNAL_IP.xip.io\": \"\"}}"
+kubectl patch configmap config-domain -nknative-serving --patch "{\"data\": {\"example.com\": null, \"$EXTERNAL_IP.nip.io\": \"\"}}"
 ```
 
 ### koの変数を設定する
@@ -77,7 +77,7 @@ skaffold dev
 ### https接続する
 証明書をsecretに追加
 ```
-mkcert -cert-file tls.crt -key-file tls.key "*.default.$EXTERNAL_IP.xip.io"
+mkcert -cert-file tls.crt -key-file tls.key "*.default.$EXTERNAL_IP.nip.io"
 kubectl create secret tls my-knative-tls-secret \
   --key tls.key \
   --cert tls.crt \
@@ -87,7 +87,7 @@ rm -f tls.crt tls.key
 service.yaml の metadata に annotation を追加する
 ```
   annotations:
-    gloo.networking.knative.dev/ssl.sni_domains: ko-example.default.{{ EXTERNAL_IPを入れる }}.xip.io
+    gloo.networking.knative.dev/ssl.sni_domains: ko-example.default.{{ EXTERNAL_IPを入れる }}.nip.io
     gloo.networking.knative.dev/ssl.secret_name: my-knative-tls-secret
 ```
 
