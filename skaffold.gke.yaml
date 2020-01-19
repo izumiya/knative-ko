@@ -1,0 +1,18 @@
+apiVersion: skaffold/v2alpha2
+kind: Config
+metadata:
+  name: go-example
+build:
+  tagPolicy:
+    sha256: {}
+  artifacts:
+    - image: gcr.io/ko-build-izumiya/ko/github.com/izumiya/knative-ko
+      custom:
+        buildCommand: ./build.sh
+        dependencies:
+          paths:
+            - helloworld.go
+deploy:
+  kubectl:
+    manifests:
+      - release/k8s.yaml
