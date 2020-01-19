@@ -49,44 +49,29 @@ export KO_DOCKER_REPO=gcr.io/$(gcloud config get-value core/project)/ko
 
 ### Skaffold
 ```
-skaffold dev -f skaffold.gke.yaml
+skaffold dev
 ```
 
 ## Minikube で Skaffold
 
 ### minikube start
 ```
-minikube start --memory=16384 --cpus=6 \
-  --vm-driver=hyperkit \
-  --disk-size=30g \
-  --extra-config=apiserver.enable-admission-plugins="LimitRanger,NamespaceExists,NamespaceLifecycle,ResourceQuota,ServiceAccount,DefaultStorageClass,MutatingAdmissionWebhook"
+./minikube_start.sh
 ```
 IPを割り振るためtunnelする
 ```
 minikube tunnel
 ```
 
-### gloo をインストール
-```
-glooctl install knative
-kubectl wait --all -ngloo-system pods --for=condition=ready --timeout=300s
-```
-
-### カスタムドメインを設定する
-```
-EXTERNAL_IP=$(kubectl get svc -ngloo-system knative-external-proxy -o jsonpath='{.spec.clusterIP}')
-kubectl patch configmap config-domain -nknative-serving --patch "{\"data\": {\"example.com\": null, \"$EXTERNAL_IP.xip.io\": \"\"}}"
-```
-
 ### koの変数を設定する
 ```
-export KO_DOCKER_REPO=ko.local
+export KO_DOCKER_REPO=gcr.io/$(gcloud config get-value core/project)/ko
 export KO_LOCAL=minikube
 ```
 
 ### Skaffold
 ```
-skaffold dev -f skaffold.minikube.yaml
+skaffold dev
 ```
 
 ### https接続する
