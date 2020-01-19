@@ -11,3 +11,6 @@ spec:
           container:
             image: github.com/izumiya/knative-ko
             imagePullPolicy: IfNotPresent
+            ports:
+              - name: h2c
+                containerPort: 8080

@@ -1,12 +1,38 @@
 package main
 
-import "github.com/gin-gonic/gin"
+import (
+	"context"
+	"fmt"
+	"log"
+	"net"
+	"os"
 
-func ping(c *gin.Context) {
-	c.JSON(200, gin.H{"message": "pong"})
+	pb "github.com/izumiya/knative-ko/genproto"
+	"google.golang.org/grpc"
+)
+
+type server struct {
+	pb.UnimplementedGreeterServer
 }
+
+// grpcurl --proto helloworld.proto --plaintext -d '{"name": "WORLD"}' localhost:8080 helloworld.Greeter/SayHello
+func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
+	log.Printf("Received: %v", in.GetName())
+	return &pb.HelloReply{Message: "Hello " + in.GetName()}, nil
+}
+
 func main() {
-	r := gin.Default()
-	r.GET("/", ping)
-	r.Run() // listen and serve on 0.0.0.0:8080
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", port))
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+	s := grpc.NewServer()
+	pb.RegisterGreeterServer(s, &server{})
+	if err := s.Serve(lis); err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
 }
